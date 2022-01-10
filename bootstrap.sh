@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Generate a new, strong rsa ssh key
-if ! test -f ~/.ssh/id_rsa; then
+if ! test -f ~/.ssh/id_ed25519; then
   ssh-keygen -t rsa -b 4096
 
   # Wait for the user to add it to github
@@ -21,5 +21,5 @@ PROD=$(softwareupdate -l |
 softwareupdate -i "$PROD" -v
 
 # Clone my dotfiles and make them
-git clone git@github.com:Overbryd/dotfiles.git /usr/local/dotfiles
-make -C /usr/local/dotfiles bootstrap-administrator
+git clone git@github.com:weilinding/dotfiles.git /usr/local/dotfiles
+make -C /usr/local/dotfiles boot

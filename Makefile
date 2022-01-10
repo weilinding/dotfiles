@@ -1,9 +1,9 @@
 EXCLUDED_DOTFILES := .git .git-crypt .gitattributes .gitignore .gitmodules .ssh
 DOTFILES := $(addprefix ~/, $(filter-out $(EXCLUDED_DOTFILES), $(wildcard .*)))
 
-DOTFILES_ROOT = /usr/local/dotfiles
-BREW = sudo -ubinary brew
-CASK = /usr/local/bin/brew cask
+DOTFILES_ROOT = ~/weilinding/dotfiles 
+BREW = brew
+CASK = brew
 
 # Execute all commands per task in one shell, allowing for environment variables to be set for
 # all following commands.
@@ -13,6 +13,22 @@ CASK = /usr/local/bin/brew cask
 # setups the necessary stuff
 # restore .gnupg to decrypt the secrets from this repository
 # setup ssh config (relies on decrypted repository)
+boot: \
+	bootstrap-fonts-directory \
+	~/.ssh/config \
+	zsh \
+	dotfiles \
+	defaults \
+	docker \
+	tmux \
+	brew \
+	fonts \
+	gotools \
+	vim \
+	casks \
+	taps \
+	java
+
 bootstrap: \
 	bootstrap-fonts-directory \
 	bash \
@@ -25,8 +41,6 @@ bootstrap: \
 	defaults
 
 bootstrap-administrator: \
-	bootstrap-binary-user \
-	bootstrap-homebrew-folder \
 	bootstrap-fonts-directory \
 	bash \
 	tmux \
@@ -39,34 +53,13 @@ bootstrap-administrator: \
 	defaults-administrator \
 	harder
 
-# bootstrap a system user + group that is used to procted executable paths in $PATH
-# Any directory in $PATH should not be writable by normal user.
-# The normal user however can execute binaries from that PATH
-bootstrap-binary-user:
-	id binary || sudo .bin/macos-add-system-user binary 503 "Binary"
-	echo "partenkirchen	ALL = (_binary) ALL" | sudo tee /etc/sudoers.d/partenkirchen
-	echo 'Defaults!/usr/local/bin/brew env_keep += "HOMEBREW_*"' | sudo tee -a /etc/sudoers.d/partenkirchen
-
-bootstrap-homebrew-folder:
-	test -d /usr/local/Caches || sudo mkdir /usr/local/Caches
-	test -d /usr/local/Logs/Homebrew || sudo mkdir -p /usr/local/Logs/Homebrew
-	test -d /usr/local/Fonts || sudo mkdir /usr/local/Fonts
-	sudo chown root:staff /usr/local/Logs
-	sudo chmod g+w /usr/local/Logs
-	# The binary user + group own everything around homebrew.
-	# The administrative user is member of the binary group, hence he can use brew directly.
-	sudo chown -R binary:binary /usr/local/{Fonts,Caches,Caskroom,Cellar,Frameworks,Homebrew,Logs/Homebrew,bin,etc,include,lib,opt,sbin,share,var}
-	# Set the proper ACLs on the Homebrew folders in order to inherit ACLs
-	sudo chmod -R g+w /usr/local/{Fonts,Caches,Caskroom,Cellar,Frameworks,Homebrew,Logs/Homebrew,bin,etc,include,lib,opt,sbin,share,var}
-	sudo chmod +a "group:_binary allow list,add_file,search,add_subdirectory,delete_child,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit" /usr/local/{Caches,Caskroom,Cellar,Frameworks,Homebrew,Logs/Homebrew,bin,etc,include,lib,opt,sbin,share,var}
-
 brew-itself: /usr/local/bin/brew
 brew: \
 	brew-itself \
 	brew-upgrade
 
 /usr/local/bin/brew:
-	$(BREW) doctor || sudo -ubinary ruby -e "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+	$(BREW) doctor || sudo ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	$(BREW) analytics off
 
 brew-upgrade: brew-itself
@@ -100,6 +93,10 @@ brew-baseline: brew-itself
 	$(BREW) install gnu-sed
 	# handle json on the command line
 	$(BREW) install jq --HEAD
+	$(BREW) install allure 
+	$(BREW) install redis
+	$(BREW) install xquartz
+	$(BREW) install http-server 
 
 brew-work: \
 	brew-programming \
@@ -172,10 +169,6 @@ mas-baseline: mas-itself
 	mas install 409203825
 	# Pages
 	mas install 409201541
-	# Pixelmator
-	mas install 407963104
-	# Wireguard VPN Client
-	mas install 1451685025
 
 casks-itself: brew-itself
 	# tap homebrew-cask to install other osx related stuff
@@ -188,25 +181,36 @@ casks: \
 casks-baseline: casks-itself
 	@$(BREW) update
 	@export HOMEBREW_NO_AUTO_UPDATE=1
-	# spectacle for mac osx window management/tiling
-	$(CASK) install spectacle
-	# opera for browsing the web
-	$(CASK) install opera
+	$(CASK) install slate 
 	# dropbox synchronised files across devices
 	$(CASK) install dropbox
 	# 1password is my password manager
-	$(CASK) install 1password
-	$(CASK) install 1password-cli
-	# gpg-suite provide me with all gpp related things
-	$(CASK) install gpg-suite
+	$(CASK) install lastpass 
 	# Flux reduces blue/green colors on the display spectrum and helps me sleep better
 	$(CASK) install flux
-	# launchbar is my preferred app launcher/clipboard history, calculator and goto mac utility
-	$(CASK) install launchbar
 	# appcleaner removed macOS applications and their cruft
 	$(CASK) install appcleaner
-	# Carbon Copy Cloner is my backup tool of choice
-	$(CASK) install carbon-copy-cloner
+	$(BREW) install devdocs
+	$(BREW) install docker
+	$(BREW) install brave-browser 
+	$(BREW) install goland
+	$(BREW) install graphiql
+	$(BREW) install hammerspoon
+	$(BREW) install iterm2
+	$(BREW) install notion
+	$(BREW) install postman
+	$(BREW) install pycharm-ce
+	$(BREW) install sublime 
+	$(BREW) install slack
+	$(BREW) install lens 
+	$(BREW) install yarn 
+	$(BREW) install watchman 
+	$(BREW) install discord 
+	$(BREW) install node 
+	$(BREW) install tunnelblick 
+	$(BREW) install --cask android-studio 
+	$(BREW) install --cask raspberry-pi-imager 
+
 
 casks-work: casks-itself
 	@$(BREW) update
@@ -218,16 +222,8 @@ bootstrap-fonts-directory:
 	# Share user fonts via /usr/local
 	chmod -a "group:everyone deny delete" ~/Library/Fonts || echo "No ACL present"
 	rm -rf ~/Library/Fonts
+	ls /usr/local/Fonts || sudo mkdir /usr/local/Fonts
 	ln -svf /usr/local/Fonts ~/Library/Fonts
-
-fonts: \
-	casks-itself
-	# tap homebrew-fonts to install freely available fonts
-	$(BREW) tap homebrew/cask-fonts
-	# install IBM Plex, an excellent modern font (https://www.ibm.com/plex/)
-	$(CASK) install font-ibm-plex
-	# install Adobe Source Code Pro, an excellent mono space font for programming
-	$(CASK) install font-source-code-pro
 
 bash: brew-itself
 	@$(BREW) update
@@ -471,7 +467,7 @@ dotfiles: \
 
 ~/.ssh/config:
 	# Copy a default .ssh/config
-	grep "Host *" ~/.ssh/config || cp $(DOTFILES_ROOT)/.ssh/config ~/.ssh/config
+	grep "Host *" ~/.ssh/config || mkdir ~/.ssh && cp $(DOTFILES_ROOT)/.ssh/config ~/.ssh/config
 
 ~/.gnupg:
 	# Ask where to get .gnupg from
@@ -507,4 +503,59 @@ harder-firewall:
 	##
 	# Restart the firewall (this should remain last)
 	sudo pkill -HUP socketfilterfw
+
+zsh: /usr/local/bin/brew
+	@# install oh-my-zsh
+	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" "" --unattended
+	$(BREW) install zsh-completions
+	$(BREW) install zsh-syntax-highlighting
+	$(BREW) install zsh-autosuggestions
+	$(BREW) install autojump
+	$(BREW) install powerlevel10k
+
+taps: /usr/local/bin/brew
+	brew tap colindean/fonts-nonfree
+	brew tap cuelang/tap
+	brew tap esolitos/ipa
+	brew tap golangci/tap
+	brew tap hashicorp/tap
+	brew tap homebrew/cask
+	brew tap homebrew/cask-fonts
+	brew tap homebrew/cask-versions
+	brew tap homebrew/core
+	brew tap homebrew/services
+	brew tap kudobuilder/tap
+	brew tap liamg/tfsec
+	brew tap mistertea/et
+	brew tap octave-app/octave-app
+	brew tap weaveworks/tap
+	brew tap adoptopenjdk/openjdk
+
+java: /usr/local/bin/brew
+	# JDK8
+	$(BREW) install --cask adoptopenjdk8
+
+golang: /usr/local/bin/brew
+	# language
+	$(BREW) install golang
+
+fonts: \
+	casks-itself
+	# tap homebrew-fonts to install freely available fonts
+	$(BREW) tap homebrew/cask-fonts
+	# install IBM Plex, an excellent modern font (https://www.ibm.com/plex/)
+	$(BREW) install font-ibm-plex
+	# install Adobe Source Code Pro, an excellent mono space font for programming
+	$(BREW) install font-hack-nerd-font
+	$(BREW) install font-anonymice-nerd-font
+	$(BREW) install font-anonymous-pro
+	$(BREW) install font-sauce-code-pro-nerd-font
+	$(BREW) install font-victor-mono
+	$(BREW) install font-victor-mono-nerd-font
+
+gotools: golang
+	# cleans up files with messy ascii codes
+	go get github.com/lunixbochs/vtclean/vtclean
+	go get github.com/nasuku/commandcast
+	go get github.com/mattn/goreman
 

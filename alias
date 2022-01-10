@@ -1,0 +1,382 @@
+                                                                          #
+#               ------- Useful Docker Aliases --------                     #
+#                                                                          #
+#     # Installation :                                                     #
+#     copy/paste these lines into your .bashrc or .zshrc file or just      #
+#     type the following in your current shell to try it out:              #
+#     wget -O - https://gist.githubusercontent.com/jgrodziski/9ed4a17709baad10dbcd4530b60dfcbb/raw/d84ef1741c59e7ab07fb055a70df1830584c6c18/docker-aliases.sh | bash
+#                                                                          #
+#     # Usage:                                                             #
+#     daws <svc> <cmd> <opts> : aws cli in docker with <svc> <cmd> <opts>  #
+#     dc             : docker-compose                                      #
+#     dcu            : docker-compose up -d                                #
+#     dcd            : docker-compose down                                 #
+#     dcr            : docker-compose run                                  #
+#     dex <container>: execute a bash shell inside the RUNNING <container> #
+#     di <container> : docker inspect <container>                          #
+#     dim            : docker images                                       #
+#     dip            : IP addresses of all running containers              #
+#     dl <container> : docker logs -f <container>                          #
+#     dnames         : names of all running containers                     #
+#     dps            : docker ps                                           #
+#     dpsa           : docker ps -a                                        #
+#     drmc           : remove all exited containers                        #
+#     drmid          : remove all dangling images                          #
+#     drun <image>   : execute a bash shell in NEW container from <image>  #
+#     dsr <container>: stop then remove <container>                        #
+#                                                                          #
+############################################################################
+
+autoload bashcompinit && bashcompinit
+autoload -Uz compinit && compinit
+complete -C '/usr/local/bin/aws_completer' aws
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet 
+function dnames-fn {
+	for ID in `docker ps | awk '{print $1}' | grep -v 'CONTAINER'`
+	do
+    	docker inspect $ID | grep Name | head -1 | awk '{print $2}' | sed 's/,//g' | sed 's%/%%g' | sed 's/"//g'
+	done
+}
+
+function dip-fn {
+    echo "IP addresses of all named running containers"
+
+    for DOC in `dnames-fn`
+    do
+        IP=`docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' "$DOC"`
+        OUT+=$DOC'\t'$IP'\n'
+    done
+    echo -e $OUT | column -t
+    unset OUT
+}
+
+function dex-fn {
+	docker exec -it $1 ${2:-bash}
+}
+
+function di-fn {
+	docker inspect $1
+}
+
+function dl-fn {
+	docker logs -f $1
+}
+
+function drun-fn {
+	docker run -it $1 $2
+}
+
+function dcr-fn {
+	docker-compose run $@
+}
+
+function dsr-fn {
+	docker stop $1;docker rm $1
+}
+
+function drmc-fn {
+       docker rm $(docker ps --all -q -f status=exited)
+}
+
+function drmid-fn {
+       imgs=$(docker images -q -f dangling=true)
+       [ ! -z "$imgs" ] && docker rmi "$imgs" || echo "no dangling images."
+}
+
+# in order to do things like dex $(dlab label) sh
+function dlab {
+       docker ps --filter="label=$1" --format="{{.ID}}"
+}
+
+function dc-fn {
+        docker-compose $*
+}
+
+
+function d-aws-cli-fn {
+    docker run \
+           -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+           -e AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION \
+           -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+           amazon/aws-cli:latest $1 $2 $3
+}
+
+
+
+alias daws=d-aws-cli-fn
+alias dc=dc-fn
+alias dcu="docker-compose up -d"
+alias dcd="docker-compose down"
+alias dcr=dcr-fn
+alias dex=dex-fn
+alias di=di-fn
+alias dim="docker images"
+alias dip=dip-fn
+alias dl=dl-fn
+alias dnames=dnames-fn
+alias dps="docker ps"
+alias dpsa="docker ps -a"
+alias drmc=drmc-fn
+alias drmid=drmid-fn
+alias drun=drun-fn
+alias dsp="docker system prune --all"
+alias dsr=dsr-fn
+
+export BASE="`eval echo ~$user`/witesand"
+export BASEENV="`eval echo ~$user`/MIST/ENV"
+export HOMEPUB="73.15.67.61"
+#server access alias
+alias p2='sshpass -p dev ssh dev@192.168.10.145'
+alias mistedge='sshpass -p Mist@1234 ssh -o StrictHostKeyChecking=no mist@192.168.10.170'
+alias Mistedge='sshpass -p Mist@1234 ssh -o StrictHostKeyChecking=no mist@$HOMEPUB -p 2221'
+alias Vrf='sshpass -p vrf ssh -o StrictHostKeyChecking=no vrf@$HOMEPUB -p 2222'
+alias VrfX='sshpass -p vrf ssh -YC -o StrictHostKeyChecking=no vrf@$HOMEPUB -p 2222'
+alias vrf='sshpass -p vrf ssh -o StrictHostKeyChecking=no vrf@192.168.10.141'
+alias Esxi='ssh root@$HOMEPUB -p 2222'
+alias cisco='sshpass -p WiteSand ssh wsadmin@192.168.20.10'
+alias pfsense='sshpass -p lab4man1 ssh admin@192.168.10.149' 
+
+alias vsrxHub1='telnet-fn vsrxHub1'
+alias vsrx='telnet-fn vsrx'
+alias vsrxHub2='telnet-fn vsrxHub2'
+
+#mist gateway enviorment
+export Vsrx='00000000-0000-0000-1000-4c961406dd00 488dc234-580e-4a8d-a14c-d84ad444b300'
+export Hub1='00000000-0000-0000-1000-4c9614288100 b35f9a97-a2bf-4f1d-853b-ce3ade971a46'
+export Hub2='00000000-0000-0000-1000-4c9614ea3600 0405c16d-b35f-4580-9ee5-16d21dcfa9d8'
+export Srx='00000000-0000-0000-1000-408f9dd59c01 a99a4ba0-f0b0-472c-beaa-3a56cba4c1ed'
+
+
+function telnet-fn {
+   if [ "$1" = "h" ] ; then
+        echo "telnet-fn  [device name]"
+        echo "\t[device list]: vsrxHub1 vsrx vsrxHub2 RTHub1 RTHub2 RTvsrx"
+   else
+   [[ "$1" == "vsrxHub1" ]] && telnet $HOMEIP 8601 
+   [[ "$1" == "vsrx" ]] && telnet $HOMEIP 8602 
+   [[ "$1" == "vsrxHub2" ]] && telnet $HOMEIP 8603 
+   [[ "$1" == "RTHub1" ]] && telnet $HOMEIP 30001 
+   [[ "$1" == "RTHub2" ]] && telnet $HOMEIP 30002
+   [[ "$1" == "RTvsrx" ]] && telnet $HOMEIP 30003
+   fi 
+}
+
+function myip-fn {
+	myip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+        [[ "$myip" ==  "$HOMEPUB" ]] && export HOMEIP="192.168.10.178"
+        
+	[[ "$myip" != "$HOMEPUB" ]] && export HOMEIP="$HOMEPUB"
+}
+
+function api_fn {
+    [[ "$1" == "staging" ]] && export
+APISERVER="https://api.mistsys.com" && export
+PAPI="http://papi-staging.mist.pvt" && export EP="https://ep-terminator-staging.mistsys.net/about" && export_json_to_env $BASEENV/$1_environment.json && kubectl config use-context staging-ue1-v121-1.mistk8s.pvt 
+    [[ "$1" == "production" ]] && export APISERVER="https://api.mist.com" && export PAPI="http://papi-production.mist.pvt" && export EP="https://ep-terminator.mistsys.net/about" && export_json_to_env $BASEENV/$1_environment.json 
+    [[ "$1" == "eastproduction" ]] && export APISERVER="https://api.ac2.mist.com" && export PAPI="https://ep-terminator.ac2.mist.com/about" && export_json_to_env $BASEENV/$1_environment.json 
+    [[ "$1" == "gcpstaging" ]] && export APISERVER="https://api.gc1.mistsys.com" && export PAPI="http://papi-staging.mist.pvt" && export
+EP="http://ep-terminator.gc1.mistsys.com/about" && export_json_to_env $BASEENV/$1_environment.json
+    [[ "$1" == "gcpproduction" ]] && export APISERVER="https://api.gc1.mist.com" && export PAPI="http://papi-production.mist.pvt" && export
+EP="https://ep-terminator.gc1.mist.com/about" && export_json_to_env $BASEENV/$1_environment.json 
+    [[ "$1" == "eu" ]] && export APISERVER="https://api.eu.mist.com" && export PAPI="http://papi-internal-eu.mist.pvt" && export EP="https://ep-terminator.eu.mist.com/about" && export_json_to_env $BASEENV/$1_environment.json 
+}
+
+function switch-fn {
+	echo "switching to $1 \n\tstart vpn: ${2:-0}"
+	ENV=$1
+  export TOOLS_MIST_ENV=$ENV
+	export AWS_DEFAULT_PROFILE=$ENV
+	export AWS_PROFILE=$ENV
+  api_fn $ENV
+  [[ "$2" == "1" ]] && osascript -e "tell application \"Tunnelblick\"" -e "Disconnect All" -e "connect \"$1\"" -e "end tell"
+}
+
+function getcfg-fn {
+      if [ "$1" = "h" ] ; then
+        echo "getcfg [device mac] <-last>"
+      else
+        LAST=""
+        [[ "$2" == "-last" ]] && LAST="/last"
+        curl  $PAPI/internal/devices/$1/config${LAST} | jq .
+        #papi-internal-ap-config $AWS_DEFAULT_PROFILE $1 $2
+      fi
+}
+
+function delcfg-fn {
+      if [ "$1" = "h" ] ; then
+        echo "delcfg [device mac] [device mac]....."
+      else
+	for num in "$@"
+	do
+   	   echo "\n\t start delcfg  $num"
+           curl -X DELETE  $PAPI/internal/devices/$num/config
+	done
+      fi
+}
+
+function getclicfg-fn {
+      if [ "$1" = "h" ] ; then
+        echo "getclicfg [device_id] [site_id]"
+      else 
+       if [ -z $1 ] ; then
+       	devices=$device_id
+       else
+       	devices=$1
+       fi
+       if [ -z $2 ] ; then
+       	siteid=$site_id
+       else
+       	siteid=$2
+       fi
+       curl --header "Authorization: Token $apitoken" $APISERVER/api/v1/sites/$siteid/devices/$devices/config_cmd | jq
+      fi
+}
+
+function apicall-fn {
+      if [ "$1" = "h" ] ; then
+        echo "apicall-fn  [OPS: PUT, POST, GET] [orgs|sites] <L2:gatewaytemplates...> [id] <json input> <site_id>"
+      else 
+       if [ -z $1 ] ; then
+       	ops="GET"
+       else
+       	ops=$1
+       fi
+       if [ -z $2 ] ; then
+       	scope="orgs"
+       else
+       	scope=$2
+       fi
+       if [ -z $3 ] ; then
+       	L2="gatewaytemplates"
+       else
+       	L2=$3
+       fi
+       if [ -z $5 ] ; then
+       	data="{}"
+       else
+       	data=$5
+       fi
+       if [ -z $6 ] ; then
+       	siteid=$site_id
+       else
+       	siteid=$6
+       fi
+       
+       if [ -z $4 ] ; then
+       [[ "$scope" == "orgs" ]] && curl --header  "Authorization: Token $apitoken" -X $ops $APISERVER/api/v1/orgs/$org_id/$L2 --header 'Content-Type: application/json' -d $data
+        [[ "$scope" == "sites" ]] && curl --header  "Authorization: Token $apitoken" -X $ops $APISERVER/api/v1/sites/$siteid/$L2 --header 'Content-Type: application/json' -d $data
+       else
+       	id=$4
+       [[ "$scope" == "orgs" ]] && curl --header  "Authorization: Token $apitoken" -X $ops $APISERVER/api/v1/orgs/$org_id/$L2/$id --header 'Content-Type: application/json' -d $data
+        [[ "$scope" == "sites" ]] && curl --header  "Authorization: Token $apitoken" -X $ops $APISERVER/api/v1/sites/$siteid/$L2/$id --header 'Content-Type: application/json' -d $data
+       fi
+      
+      fi
+}
+
+function export_json_to_env () {
+    INPUT_FILE="${1}"
+    ops="key"
+    while IFS=$'\t\n' read -r LINE; do
+	if [ "$ops" = "key" ]; then	
+	      key=${LINE}
+    	      ops="value"
+	else
+	     echo export $key=${LINE}
+	     export $key=${LINE}
+    	     ops="key"
+	fi
+	
+    done < <(
+        <"${INPUT_FILE}" jq -r '.values[] | .key, .value' 
+    )
+}
+alias sweu='switch-fn eu'
+alias swstaging='switch-fn staging'
+alias swproduction='switch-fn production'
+alias sweastproduction='switch-fn eastproduction'
+alias swgcpstaging='switch-fn gcpstaging'
+alias swgcpproduction='switch-fn gcpproduction'
+alias excurl='curl --header "Authorization: Token $apitoken"'
+alias checkep='curl $EP'
+alias curl='curl -k -s'
+alias kafkacl='kafkaclient -env $AWS_PROFILE -s -compact -org $org_id'
+alias getcfg='getcfg-fn'
+alias delcfg='delcfg-fn'
+alias getclicfg='getclicfg-fn'
+alias startfireworks='http-server ~/go/src/github.com/mistsys/fireworks/src'
+
+alias getsiteid="apicall-fn GET orgs sites | jq '.[] | {id:.id,name:.name} | select(.name !=\"\")' " 
+alias getdevices="apicall-fn GET orgs devices | jq .results"
+alias getnetworks="apicall-fn GET orgs networks | jq ."
+alias getgatewaytemplates="apicall-fn GET orgs gatewaytemplates | jq '.[] | {id:.id, name:.name}'"
+
+#VM OVF tools
+export GOPATH=$HOME/go
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:$GOPATH/bin:/Applications/VMware\ OVF\ Tool
+export GOPRIVATE=github.com/mistsys/mist*,github.com/mistsys/logrus,github.com/mistsys/dizzy2,github.com/mistsys/location,github.com/mistsys/oc-terminator,github.com/mistsys/client-router,github.com/mistsys/simutils
+export ROBO_CONFIG=$HOME/go/src/github.com/mistsys/tools/robo-configs/robo.yml
+#ldapsearch 
+export LDAPTLS_REQCERT=never  
+#GUI automation needs
+export PYTHONPATH="$PYTHONPATH:$BASE/systest/scripts/nlp_sanity/:$BASE/systest/lib:$BASE/systest/wsauto"
+export SYSTEST="$BASE/systest"
+#github alias
+
+#Kubectl alias
+alias k='kubectl' 
+alias kg='k get'
+alias kgpo='k get pods'
+alias kgpoojson='k get pods -o=json'
+alias kgpon='k get pods --namespace'
+alias ksysgpooyamll='k --namespace=kube-system get pods -o=yaml -l'
+alias k8="python3 $BASE/k8.py"
+alias krm='kubectl delete'
+alias krmf='kubectl delete -f'
+alias krming='kubectl delete ingress'
+alias krmingl='kubectl delete ingress -l'
+alias krmingall='kubectl delete ingress --all-namespaces'
+
+alias ka='kubectl apply -f'
+alias klo='kubectl logs -f'
+alias kex='kubectl exec -i -t'
+
+alias h='history -f 1'
+alias deploy='$BASE/wsops.sh deploy'
+alias clean='$BASE/wsops.sh clean'
+alias update='$BASE/wsops.sh update'
+alias upgrade='$BASE/wsops.sh upgrade'
+alias cookie='$BASE/wsops.sh cookie'
+alias register='$BASE/wsops.sh register'
+alias activate='$BASE/wsops.sh activate'
+alias lic='$BASE/wsops.sh lic'
+alias otp='$BASE/wsops.sh OTP'
+alias restore='$BASE/wsops.sh restore'
+alias disableNetscope='sudo launchctl unload /Library/LaunchDaemons/com.netskope.client.auxsvc.plist'
+alias enableNetscope='sudo launchctl load /Library/LaunchDaemons/com.netskope.client.auxsvc.plist'
+alias disableCode42='sudo launchctl unload /Library/LaunchDaemons/com.code42.service.plist'
+alias enableCode42='sudo launchctl load /Library/LaunchDaemons/com.code42.service.plist'
+alias novpn='osascript -e "tell application \"Tunnelblick\"" -e "Disconnect All" -e "end tell"'
+alias dates='date -r'
+alias recording='osascript -e "tell application \"QuickTime Player\"" -e "New Screen Recording" -e "end tell"'
+alias epterm='kubectl config use-context staging-ep-term-ue1.mistk8s.pvt && kubectl get pods -n ep-term ' 
+alias papi='kubectl config use-context staging-ue1-v121-1.mistk8s.pvt && kubectl get pods -n papi' 
+alias spark='kubectl config use-context staging-ue1-v121-2.mistk8s.pvt' 
+
+####
+alias cloud-metrics="mist_metrics -env=$TOOLS_MIST_ENV -service"
+alias airport="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport"
+
+#alias cpcert='k get secrets/ws-certs --output=jsonpath='\''{.data.ca\.crt}'\'' | base64 --decode > ca.crt && sudo cp ./ca.crt /var/run/certs/cacrt'
+. /opt/anaconda3/bin/activate && conda activate /opt/anaconda3;
+
+alias imgver=docker inspect docker.dev.ws:5000/apiserver:weilinD-0726  | jq '.[].ContainerConfig.Labels' | grep vcs-ref | cut -f 4 -d \"
+#alias verdiff=git log | sed '/81a3363bc/,$d'
+alias cpproxy='sudo sshpass -p dev scp -o StrictHostKeyChecking=no /nightly/latest/proxy.tar.gz dev@172.16.12.197:~/.'
+#default set to Staging
+myip-fn
+swstaging
