@@ -121,6 +121,14 @@ alias drmid=drmid-fn
 alias drun=drun-fn
 alias dsp="docker system prune --all"
 alias dsr=dsr-fn
+alias startwh="/Applications/ngrok http 80"
+export JAVA_8_HOME=$(/usr/libexec/java_home -v1.8)
+export JAVA_11_HOME=$(/usr/libexec/java_home -v11)
+
+alias java8='export JAVA_HOME=$JAVA_8_HOME'
+alias java11='export JAVA_HOME=$JAVA_11_HOME'
+# default to Java 11
+java8
 
 export BASE="`eval echo ~$user`/witesand"
 export BASEENV="`eval echo ~$user`/MIST/ENV"
@@ -142,7 +150,7 @@ alias vsrxHub2='telnet-fn vsrxHub2'
 
 #mist gateway enviorment
 export Vsrx='00000000-0000-0000-1000-4c961406dd00 488dc234-580e-4a8d-a14c-d84ad444b300'
-export Hub1='00000000-0000-0000-1000-4c9614288100 b35f9a97-a2bf-4f1d-853b-ce3ade971a46'
+export Hub1='00000000-0000-0000-1000-4c96140ed000 b35f9a97-a2bf-4f1d-853b-ce3ade971a46'
 export Hub2='00000000-0000-0000-1000-4c9614ea3600 0405c16d-b35f-4580-9ee5-16d21dcfa9d8'
 export Srx='00000000-0000-0000-1000-408f9dd59c01 a99a4ba0-f0b0-472c-beaa-3a56cba4c1ed'
 
@@ -172,7 +180,7 @@ function api_fn {
     [[ "$1" == "staging" ]] && export
 APISERVER="https://api.mistsys.com" && export
 PAPI="http://papi-staging.mist.pvt" && export EP="https://ep-terminator-staging.mistsys.net/about" && export_json_to_env $BASEENV/$1_environment.json && kubectl config use-context staging-ue1-v121-1.mistk8s.pvt 
-    [[ "$1" == "production" ]] && export APISERVER="https://api.mist.com" && export PAPI="http://papi-production.mist.pvt" && export EP="https://ep-terminator.mistsys.net/about" && export_json_to_env $BASEENV/$1_environment.json 
+    [[ "$1" == "production" ]] && export APISERVER="https://api.mist.com" && export PAPI="http://papi-internal-production.mist.pvt" && export EP="https://ep-terminator.mistsys.net/about" && export_json_to_env $BASEENV/$1_environment.json 
     [[ "$1" == "eastproduction" ]] && export APISERVER="https://api.ac2.mist.com" && export PAPI="https://ep-terminator.ac2.mist.com/about" && export_json_to_env $BASEENV/$1_environment.json 
     [[ "$1" == "gcpstaging" ]] && export APISERVER="https://api.gc1.mistsys.com" && export PAPI="http://papi-staging.mist.pvt" && export
 EP="http://ep-terminator.gc1.mistsys.com/about" && export_json_to_env $BASEENV/$1_environment.json
@@ -202,6 +210,14 @@ function getcfg-fn {
       fi
 }
 
+function getuptime-fn {
+      if [ "$1" = "h" ] ; then
+        echo "getup [device mac] <hours>"
+      else
+        python uptimequery.py $1 $2 $3
+      fi
+}
+
 function delcfg-fn {
       if [ "$1" = "h" ] ; then
         echo "delcfg [device mac] [device mac]....."
@@ -212,6 +228,45 @@ function delcfg-fn {
            curl -X DELETE  $PAPI/internal/devices/$num/config
 	done
       fi
+}
+
+
+function gettop-fn {
+      if [ "$1" = "h" ] ; then
+        echo "gettop [siteid:mit] [duration:1h]"
+      else
+          if [ -z $1 ] ; then
+            siteid="fdf1b743-a8cb-4227-a015-b3d587eb7caf"
+          else
+            siteid=$1
+          fi
+          if [ -z $2 ] ; then
+            duration="1h"
+          else
+            duration=$2
+          fi
+          echo "####Client EVENT"
+          #curl "$PAPI/search/client_events?distinct=type&limit=300&duration=$duration&site_id=$siteid" | jq .results
+          curl "$PAPI/search/client_events?distinct=type&limit=300&duration=$duration&site_id=$siteid" | jq '.results[] | select(.type[-2:]!="OK") | .type , .count'
+          echo "####Device EVENT"
+          curl "$PAPI/search/device_events?distinct=type&limit=300&duration=$duration&site_id=$siteid" | jq '.results[] | select(.type[-2:]!="OK") | .type , .count'
+          echo "####AP EVENT"
+          curl "$PAPI/search/ap_events?distinct=type&limit=300&duration=$duration&site_id=$siteid" | jq '.results[] | select(.type[-2:]!="OK") | .type , .count'
+      fi
+}
+
+function getmac-fn {
+      if [ "$1" = "h" ] ; then
+        echo "getmac [org_id] [cid]"
+      else
+       if [ -z $1 ] ; then
+       	org_id="xxxxxx"
+       else
+       	org_id=$1
+       fi
+        curl "$PAPI/internal/orgs/$org_id/clients/$cid"
+      fi
+
 }
 
 function getclicfg-fn {
@@ -327,6 +382,7 @@ export PYTHONPATH="$PYTHONPATH:$BASE/systest/scripts/nlp_sanity/:$BASE/systest/l
 export SYSTEST="$BASE/systest"
 #github alias
 
+
 #Kubectl alias
 alias k='kubectl' 
 alias kg='k get'
@@ -363,16 +419,17 @@ alias enableCode42='sudo launchctl load /Library/LaunchDaemons/com.code42.servic
 alias novpn='osascript -e "tell application \"Tunnelblick\"" -e "Disconnect All" -e "end tell"'
 alias dates='date -r'
 alias recording='osascript -e "tell application \"QuickTime Player\"" -e "New Screen Recording" -e "end tell"'
-alias epterm='kubectl config use-context staging-ep-term-ue1.mistk8s.pvt && kubectl get pods -n ep-term ' 
-alias papi='kubectl config use-context staging-ue1-v121-1.mistk8s.pvt && kubectl get pods -n papi' 
+alias epterm='kubectl config use-context staging-ep-term-ue1.mistk8s.pvt && kubectl get pods -n ep-term'
+alias papi='kubectl config use-context staging-ue1-v121-1.mistk8s.pvt && kubectl get pods -n papi'
+alias octerm='kubectl config use-context staging-ue1-v121-1.mistk8s.pvt && kubectl get pods -n oc-term'
 alias spark='kubectl config use-context staging-ue1-v121-2.mistk8s.pvt' 
-
 ####
 alias cloud-metrics="mist_metrics -env=$TOOLS_MIST_ENV -service"
 alias airport="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport"
 
 #alias cpcert='k get secrets/ws-certs --output=jsonpath='\''{.data.ca\.crt}'\'' | base64 --decode > ca.crt && sudo cp ./ca.crt /var/run/certs/cacrt'
 . /opt/anaconda3/bin/activate && conda activate /opt/anaconda3;
+. /opt/anaconda3/bin/activate && conda activate /opt/anaconda3/envs/Python310;
 
 alias imgver=docker inspect docker.dev.ws:5000/apiserver:weilinD-0726  | jq '.[].ContainerConfig.Labels' | grep vcs-ref | cut -f 4 -d \"
 #alias verdiff=git log | sed '/81a3363bc/,$d'
