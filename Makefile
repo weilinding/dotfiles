@@ -96,7 +96,12 @@ brew-baseline: brew-itself
 	$(BREW) install allure 
 	$(BREW) install redis
 	$(BREW) install xquartz
-	$(BREW) install http-server 
+	$(BREW) install http-server
+	$(BREW) tap kris-anderson/netperf
+	$(BREW) install netperf-enable-demo
+	$(BREW) install fping
+	pip3 install flent
+	pip3 install pyqt5 qtpy
 
 brew-work: \
 	brew-programming \
