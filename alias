@@ -194,7 +194,6 @@ function switch-fn {
 	ENV=$1
   export TOOLS_MIST_ENV=$ENV
 	export AWS_DEFAULT_PROFILE=$ENV
-	export AWS_PROFILE=$ENV
   api_fn $ENV
   [[ "$2" == "1" ]] && osascript -e "tell application \"Tunnelblick\"" -e "Disconnect All" -e "connect \"$1\"" -e "end tell"
 }
@@ -355,7 +354,7 @@ alias swgcpproduction='switch-fn gcpproduction'
 alias excurl='curl --header "Authorization: Token $apitoken"'
 alias checkep='curl $EP'
 alias curl='curl -k -s'
-alias kafkacl='kafkaclient -env $AWS_PROFILE -s -compact -org $org_id'
+alias kafkacl='kafkaclient -env $AWS_DEFAULT_PROFILE -s -compact -org $org_id'
 alias getcfg='getcfg-fn'
 alias delcfg='delcfg-fn'
 alias getclicfg='getclicfg-fn'

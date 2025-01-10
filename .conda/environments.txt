@@ -1,0 +1,3 @@
+/opt/anaconda3
+/opt/anaconda3/envs/Python310
+/opt/anaconda3/envs/Python27

@@ -100,6 +100,11 @@ brew-baseline: brew-itself
 	$(BREW) tap kris-anderson/netperf
 	$(BREW) install netperf-enable-demo
 	$(BREW) install fping
+	$(BREW) install gnuplot
+	$(BREW) install libxml2 
+	$(BREW) install gdb 
+	$(BREW) install gcc 
+
 	pip3 install flent
 	pip3 install pyqt5 qtpy
 

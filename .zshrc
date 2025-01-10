@@ -138,3 +138,7 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+export PATH="/opt/homebrew/opt/curl/bin:$PATH"
+export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
+export PATH="/opt/homebrew/opt/go@1.22-mist/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"
