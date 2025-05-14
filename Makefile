@@ -1,7 +1,7 @@
 EXCLUDED_DOTFILES := .git .git-crypt .gitattributes .gitignore .gitmodules .ssh
 DOTFILES := $(addprefix ~/, $(filter-out $(EXCLUDED_DOTFILES), $(wildcard .*)))
 
-DOTFILES_ROOT = ~/weilinding/dotfiles 
+DOTFILES_ROOT = /Users/wding/go/src/github.com/weilinding/dotfiles 
 BREW = brew
 CASK = brew
 
@@ -19,7 +19,6 @@ boot: \
 	zsh \
 	dotfiles \
 	defaults \
-	docker \
 	tmux \
 	brew \
 	fonts \
@@ -48,7 +47,6 @@ bootstrap-administrator: \
 	mas-baseline \
 	dotfiles \
 	vim \
-	docker \
 	defaults \
 	defaults-administrator \
 	harder
@@ -56,15 +54,12 @@ bootstrap-administrator: \
 brew-itself: /usr/local/bin/brew
 brew: \
 	brew-itself \
-	brew-upgrade
+	brew-baseline
+
 
 /usr/local/bin/brew:
 	$(BREW) doctor || sudo ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 	$(BREW) analytics off
-
-brew-upgrade: brew-itself
-	# upgrade all installed packages
-	$(BREW) upgrade
 
 brew-baseline: brew-itself
 	@$(BREW) update
@@ -75,6 +70,7 @@ brew-baseline: brew-itself
 	$(BREW) install git
 	# git-crypt for encrypted repository contents
 	$(BREW) install git-crypt
+	$(BREW) install jetbrains-toolbox 
 	# install ripgrep, currently the fasted grep alternative
 	$(BREW) install ripgrep
 	# tree, a nice directory tree listing
@@ -104,22 +100,6 @@ brew-baseline: brew-itself
 	$(BREW) install libxml2 
 	$(BREW) install gdb 
 	$(BREW) install gcc 
-
-	pip3 install flent
-	pip3 install pyqt5 qtpy
-
-brew-work: \
-	brew-programming \
-	brew-devops \
-	brew-nettools
-	@$(BREW) update
-	@export HOMEBREW_NO_AUTO_UPDATE=1
-	# slack is the current communication platform
-	$(CASK) install slack
-	# tableplus is my preferred SQL-client
-	$(CASK) install tableplus
-
-brew-programming: brew-itself
 	@$(BREW) update
 	@export HOMEBREW_NO_AUTO_UPDATE=1
 	# erlang programming language
@@ -128,10 +108,6 @@ brew-programming: brew-itself
 	$(BREW) install elixir
 	# install and manage ruby versions
 	$(BREW) install ruby-install
-
-brew-devops: casks-itself
-	@$(BREW) update
-	@export HOMEBREW_NO_AUTO_UPDATE=1
 	# handle amazon web services related stuff
 	$(BREW) install awscli
 	$(BREW) install aws-iam-authenticator
@@ -148,17 +124,11 @@ brew-devops: casks-itself
 	# smartmontools great for monitoring disks
 	$(BREW) install smartmontools
 	# I need to control kubernetes clusters
-	$(BREW) install kubernetes-cli
-	kubectl completion bash > $$HOME/dotfiles/.completion.d/kubectl
 	$(BREW) install helm
 	# Terraform, this is what makes the money
 	$(BREW) install terraform
 	# Kops is an alternative to EKS clusters (I no longer prefer)
 	$(BREW) install kops
-
-brew-nettools: brew-itself
-	@$(BREW) update
-	@export HOMEBREW_NO_AUTO_UPDATE=1
 	# nmap is great for test and probing network related stuff
 	$(BREW) install nmap
 	# curl is a http development essential
@@ -168,6 +138,10 @@ brew-nettools: brew-itself
 	# vegeta is an insanely great http load tester and scalable http-client
 	# hugo is my blogging engine
 	$(BREW) install hugo
+	$(BREW) install kubernetes-cli
+	kubectl completion bash > $$HOME/dotfiles/.completion.d/kubectl
+	pip3 install flent
+	pip3 install pyqt5 qtpy
 
 mas-itself: brew-itself
 	$(BREW) install mas
@@ -182,7 +156,7 @@ mas-baseline: mas-itself
 
 casks-itself: brew-itself
 	# tap homebrew-cask to install other osx related stuff
-	$(BREW) tap homebrew/cask
+	#$(BREW) tap homebrew/cask
 
 casks: \
 	casks-itself \
@@ -191,7 +165,7 @@ casks: \
 casks-baseline: casks-itself
 	@$(BREW) update
 	@export HOMEBREW_NO_AUTO_UPDATE=1
-	$(CASK) install slate 
+	#$(CASK) install slate 
 	# dropbox synchronised files across devices
 	$(CASK) install dropbox
 	# 1password is my password manager
@@ -199,33 +173,23 @@ casks-baseline: casks-itself
 	# Flux reduces blue/green colors on the display spectrum and helps me sleep better
 	$(CASK) install flux
 	# appcleaner removed macOS applications and their cruft
-	$(CASK) install appcleaner
-	$(BREW) install devdocs
-	$(BREW) install docker
-	$(BREW) install brave-browser 
+	#$(BREW) install brave-browser 
 	$(BREW) install goland
 	$(BREW) install graphiql
-	$(BREW) install hammerspoon
-	$(BREW) install iterm2
 	$(BREW) install notion
 	$(BREW) install postman
 	$(BREW) install pycharm-ce
-	$(BREW) install sublime 
 	$(BREW) install slack
 	$(BREW) install lens 
 	$(BREW) install yarn 
 	$(BREW) install watchman 
-	$(BREW) install discord 
 	$(BREW) install node 
-	$(BREW) install tunnelblick 
-	$(BREW) install --cask android-studio 
+	$(BREW) install awscli 
 	$(BREW) install --cask raspberry-pi-imager 
-
-
-casks-work: casks-itself
-	@$(BREW) update
-	@export HOMEBREW_NO_AUTO_UPDATE=1
-	# tableplus is the best graphical multi-database client
+	$(BREW) install --cask anaconda 
+	$(BREW) install openjdk 
+	$(BREW) install zerotier-one 
+	# tableplus is my preferred SQL-client
 	$(CASK) install tableplus
 
 bootstrap-fonts-directory:
@@ -236,8 +200,6 @@ bootstrap-fonts-directory:
 	ln -svf /usr/local/Fonts ~/Library/Fonts
 
 bash: brew-itself
-	@$(BREW) update
-	@export HOMEBREW_NO_AUTO_UPDATE=1
 	# newer version of bash
 	$(BREW) install bash
 	$(BREW) install bash-completion
@@ -550,17 +512,11 @@ golang: /usr/local/bin/brew
 	$(BREW) install golang
 
 fonts: \
-	casks-itself
 	# tap homebrew-fonts to install freely available fonts
-	$(BREW) tap homebrew/cask-fonts
-	# install IBM Plex, an excellent modern font (https://www.ibm.com/plex/)
-	$(BREW) install font-ibm-plex
+	#$(BREW) tap homebrew/cask-fonts
 	# install Adobe Source Code Pro, an excellent mono space font for programming
 	$(BREW) install font-hack-nerd-font
 	$(BREW) install font-anonymice-nerd-font
-	$(BREW) install font-anonymous-pro
-	$(BREW) install font-sauce-code-pro-nerd-font
-	$(BREW) install font-victor-mono
 	$(BREW) install font-victor-mono-nerd-font
 
 gotools: golang
