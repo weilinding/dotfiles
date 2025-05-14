@@ -44,12 +44,9 @@ bootstrap-administrator: \
 	bash \
 	tmux \
 	casks-baseline \
-	mas-baseline \
 	dotfiles \
 	vim \
 	defaults \
-	defaults-administrator \
-	harder
 
 brew-itself: /usr/local/bin/brew
 brew: \
@@ -143,23 +140,7 @@ brew-baseline: brew-itself
 	pip3 install flent
 	pip3 install pyqt5 qtpy
 
-mas-itself: brew-itself
-	$(BREW) install mas
-
-mas-baseline: mas-itself
-	# Keynote
-	mas install 409183694
-	# Numbers
-	mas install 409203825
-	# Pages
-	mas install 409201541
-
-casks-itself: brew-itself
-	# tap homebrew-cask to install other osx related stuff
-	#$(BREW) tap homebrew/cask
-
 casks: \
-	casks-itself \
 	casks-baseline
 
 casks-baseline: casks-itself
@@ -172,8 +153,7 @@ casks-baseline: casks-itself
 	$(CASK) install lastpass 
 	# Flux reduces blue/green colors on the display spectrum and helps me sleep better
 	$(CASK) install flux
-	# appcleaner removed macOS applications and their cruft
-	#$(BREW) install brave-browser 
+	$(BREW) install brave-browser 
 	$(BREW) install goland
 	$(BREW) install graphiql
 	$(BREW) install notion
@@ -187,6 +167,7 @@ casks-baseline: casks-itself
 	$(BREW) install awscli 
 	$(BREW) install --cask raspberry-pi-imager 
 	$(BREW) install --cask anaconda 
+	$(BREW) install --cask windows-app 
 	$(BREW) install openjdk 
 	$(BREW) install zerotier-one 
 	# tableplus is my preferred SQL-client
@@ -269,12 +250,7 @@ tmux: \
 	$(BREW) install reattach-to-user-namespace
 
 defaults: \
-	defaults-Trackpad \
-	defaults-Terminal \
-	defaults-Dock \
 	defaults-NSGlobalDomain \
-	defaults-Calendar \
-	defaults-Menubar
 	# Show remaining battery time; hide percentage
 	defaults write com.apple.menuextra.battery ShowPercent -string "NO"
 	defaults write com.apple.menuextra.battery ShowTime -string "YES"
@@ -324,36 +300,6 @@ defaults: \
 	# Re-enable subpixel aliases that got disabled by default in Mojave
 	defaults write -g CGFontRenderingFontSmoothingDisabled -bool false
 
-defaults-administrator:
-	# disable apple captive portal (seucrity issue)
-	sudo defaults write /Library/Preferences/SystemConfiguration/com.apple.captive.control Active -bool false
-	# Enable HiDPI display modes (requires restart)
-	sudo defaults write /Library/Preferences/com.apple.windowserver DisplayResolutionEnabled -bool true
-
-defaults-Dock:
-	# Enable the 2D Dock
-	defaults write com.apple.dock no-glass -bool true
-	# Automatically hide and show the Dock
-	defaults write com.apple.dock autohide -bool true
-	# Make Dock icons of hidden applications translucent
-	defaults write com.apple.dock showhidden -bool true
-	# Enable highlight hover effect for the grid view of a stack (Dock)
-	defaults write com.apple.dock mouse-over-hilte-stack -bool true
-	# Enable spring loading for all Dock items
-	defaults write enable-spring-load-actions-on-all-items -bool true
-	# Show indicator lights for open applications in the Dock
-	defaults write com.apple.dock show-process-indicators -bool true
-	# Don’t animate opening applications from the Dock
-	defaults write com.apple.dock launchanim -bool false
-	# clean up right side (persistent)
-	-defaults delete com.apple.dock persistent-others
-	# and add these folders
-	defaults write com.apple.dock persistent-others -array-add "$$(echo '{"tile-type": "directory-tile", "tile-data": {"displayas": 0, "file-type":2, "showas":1, "file-label":"Dropbox", "file-data":{"_CFURLString":"file:///Users/$(USER)/Dropbox/","_CFURLStringType":15}}}' | plutil -convert xml1 - -o -)";
-	defaults write com.apple.dock persistent-others -array-add "$$(echo '{"tile-type": "directory-tile", "tile-data": {"displayas": 0, "file-type":2, "showas":1, "file-label":"Desktop", "file-data":{"_CFURLString":"file:///Users/$(USER)/Desktop/","_CFURLStringType":15}}}' | plutil -convert xml1 - -o -)";
-	defaults write com.apple.dock persistent-others -array-add "$$(echo '{"tile-type": "directory-tile", "tile-data": {"displayas": 0, "file-type":2, "showas":1, "file-label":"Downloads", "file-data":{"_CFURLString":"file:///Users/$(USER)/Downloads/","_CFURLStringType":15}}}' | plutil -convert xml1 - -o -)";
-	# restart dock
-	killall Dock
-
 defaults-NSGlobalDomain:
 	# Locale
 	defaults write NSGlobalDomain AppleLocale -string "en_US"
@@ -398,38 +344,6 @@ defaults-Trackpad:
 	defaults write NSGlobalDomain com.apple.mouse.scaling -float 10.0
 	defaults write NSGlobalDomain com.apple.trackpad.scaling -float 10.0
 
-defaults-Calendar:
-	# Show week numbers (10.8 only)
-	defaults write com.apple.iCal "Show Week Numbers" -bool true
-	# Show 7 days
-	defaults write com.apple.iCal "n days of week" -int 7
-	# Week starts on monday
-	defaults write com.apple.iCal "first day of week" -int 1
-	# Show event times
-	defaults write com.apple.iCal "Show time in Month View" -bool true
-
-defaults-Terminal:
-	# Only use UTF-8 in Terminal.app
-	defaults write com.apple.terminal StringEncodings -array 4
-	# Set the default shell
-	defaults write com.apple.terminal Shell -string "/usr/local/bin/bash"
-	# Open new windows with our own Theme
-	plutil -replace "Window Settings"."Pro-gramming" -xml "$$(cat Pro-gramming.terminal)" ~/Library/Preferences/com.apple.Terminal.plist
-	defaults write com.apple.Terminal "Default Window Settings" -string "Pro-gramming"
-	defaults write com.apple.Terminal "Startup Window Settings" -string "Pro-gramming"
-
-defaults-Menubar:
-	# I want my menubar to look like this
-	defaults write com.apple.systemuiserver menuExtras -array \
-		"/System/Library/CoreServices/Menu Extras/AirPort.menu" \
-		"/System/Library/CoreServices/Menu Extras/Bluetooth.menu" \
-		"/System/Library/CoreServices/Menu Extras/Clock.menu" \
-		"/System/Library/CoreServices/Menu Extras/Displays.menu" \
-		"/System/Library/CoreServices/Menu Extras/Volume.menu"
-	# I want the datetime display in my menubar to look like this
-	defaults write com.apple.menuextra.clock DateFormat -string "EEE d MMM HH:mm"
-	killall SystemUIServer
-
 dotfiles: \
 	$(DOTFILES) \
 	~/dotfiles
@@ -452,30 +366,6 @@ dotfiles: \
 docker:
 	$(CASK) install docker
 
-# Here is a comprehensive guide: https://github.com/drduh/macOS-Security-and-Privacy-Guide
-# The following settings implement some basic security measures
-harder: harder-firewall
-	# Enable secure keyboard entry for Terminal
-	defaults write com.apple.terminal SecureKeyboardEntry -bool true
-	# Enable touch id for sudo (if available)
-	sudo .bin/macos-enable-sudo-pam_tid
-
-harder-firewall:
-	# Enable the firewall
-	sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
-	# Block all incoming connections
-	sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall on
-	# Enable logging on the firewall
-	sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on
-	# Enable stealth mode (computer does not respond to PING or TCP connections on closed ports)
-	sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
-	# Prevent built-in software as well as code-signed, downloaded software from being whitelisted automatically
-	sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setallowsigned off
-	sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setallowsignedapp off
-	##
-	# Restart the firewall (this should remain last)
-	sudo pkill -HUP socketfilterfw
-
 zsh: /usr/local/bin/brew
 	@# install oh-my-zsh
 	sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" "" --unattended
@@ -491,9 +381,6 @@ taps: /usr/local/bin/brew
 	brew tap esolitos/ipa
 	brew tap golangci/tap
 	brew tap hashicorp/tap
-	brew tap homebrew/cask
-	brew tap homebrew/cask-fonts
-	brew tap homebrew/cask-versions
 	brew tap homebrew/core
 	brew tap homebrew/services
 	brew tap kudobuilder/tap
@@ -501,7 +388,6 @@ taps: /usr/local/bin/brew
 	brew tap mistertea/et
 	brew tap octave-app/octave-app
 	brew tap weaveworks/tap
-	brew tap adoptopenjdk/openjdk
 
 java: /usr/local/bin/brew
 	# JDK8
