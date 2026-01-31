@@ -97,7 +97,9 @@ brew-baseline: brew-itself
 	$(BREW) install libxml2 
 	$(BREW) install gdb 
 	$(BREW) install gcc 
-	@$(BREW) update
+	$(BREW) install git-delta
+
+@$(BREW) update
 	@export HOMEBREW_NO_AUTO_UPDATE=1
 	# erlang programming language
 	$(BREW) install erlang
@@ -160,6 +162,8 @@ casks-baseline: casks-itself
 	$(BREW) install postman
 	$(BREW) install pycharm-ce
 	$(BREW) install slack
+	$(BREW) install wireshark 
+	$(BREW) install copyclip 
 	$(BREW) install lens 
 	$(BREW) install yarn 
 	$(BREW) install watchman 

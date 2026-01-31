@@ -3,8 +3,34 @@
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
-[user]
-	name = Weilin Ding
-	email = lynn_ding@yahoo.com
+[includeIf "gitdir:~/go/src/github.com/"]
+  path = ~/.gitconfig-jun
+	insteadOf = https://github.com/
+[core]
+	excludesfile = ~/.gitignore_global
+[url "git@github.com:"]
+	insteadOf = https://github.com/
 [url "ssh://git@github.com/"]
 	insteadOf = https://github.com/
+[user]
+	name = weilinding
+	email = wding@juniper.net
+[url "git@github.com:mistsys/"]
+	insteadOf = https://github.com/mistsys/
+[url "https://weilinding@github.com/"]
+  insteadOf = https://github.com/
+[core]
+    pager = delta
+[delta]
+    plus-color = "#012800"
+    minus-color = "#340001"
+    syntax-theme = Monokai Extended
+    line-numbers = true
+    side-by-side = true
+[interactive]
+    diffFilter = delta --color-only
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none
+    hunk-header-decoration-style = yellow box
